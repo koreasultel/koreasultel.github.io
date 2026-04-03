@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>요금 최적화 카드 생성 | 슈텔레콤</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: #f0efea;
+  font-family: 'Noto Sans KR', sans-serif;
+  color: #1e1e1e;
+  min-height: 100vh;
+}
+
+.app {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 24px 16px 60px;
+}
+
+.app-header {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.app-header h1 {
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: -0.5px;
+}
+
+.app-header h1 em { font-style: normal; color: #1a56db; }
+
+.app-header p {
+  font-size: 13px;
+  color: #888;
+  margin-top: 4px;
+}
+
+/* 입력 영역 */
+.input-section {
+  background: #fff;
+  border: 1px solid #e5e5e0;
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+
+.input-section h2 {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.form-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.form-row.single { display: block; }
+
+.form-group {
+  flex: 1;
+}
+
+.form-group label {
+  display: block;
+  font-size: 11px;
+  color: #888;
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+.form-group input, .form-group textarea, .form-group select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #e0e0db;
+  border-radius: 10px;
+  font-size: 14px;
+  font-family: 'Noto Sans KR', sans-serif;
+  background: #fafaf8;
+  transition: border 0.2s;
+}
+
+.form-group input:focus, .form-group textarea:focus, .form-group select:focus {
+  outline: none;
+  border-color: #1a56db;
+  background: #fff;
+}
+
+.form-group textarea {
+  height: 70px;
+  resize: vertical;
+}
+
+/* 구성원 카드 */
+.member-input {
+  background: #f9f9f6;
+  border: 1px solid #eeede8;
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 10px;
+  position: relative;
+}
+
+.member-input .member-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.member-input .member-num {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1a56db;
+}
+
+.btn-remove {
+  background: none;
+  border: none;
+  color: #dc2626;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+}
+
+.btn-add {
+  width: 100%;
+  padding: 12px;
+  background: #f0effc;
+  color: #1a56db;
+  border: 1px dashed #c7c4f0;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-family: 'Noto Sans KR', sans-serif;
+}
+
+.btn-add:hover { background: #e8e7f8; }
+
+/* 버튼 */
+.action-btns {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.btn {
+  flex: 1;
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: 'Noto Sans KR', sans-serif;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.btn:active { transform: scale(0.98); }
+
+.btn-preview {
+  background: #1a56db;
+  color: #fff;
+}
+
+.btn-preview:hover { box-shadow: 0 4px 16px rgba(26,86,219,0.3); }
+
+.btn-download {
+  background: #059669;
+  color: #fff;
+  display: none;
+}
+
+.btn-download:hover { box-shadow: 0 4px 16px rgba(5,150,105,0.3); }
+
+.btn-download.show { display: block; }
+
+/* 미리보기 카드 */
+#preview-area {
+  display: none;
+  margin-bottom: 20px;
+}
+
+#preview-area.show { display: block; }
+
+.preview-label {
+  font-size: 13px;
+  color: #888;
+  margin-bottom: 8px;
+  text-align: center;
+  font-weight: 500;
+}
+
+/* ===== 카드 디자인 (이미지로 변환될 영역) ===== */
+#card {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 32px 28px;
+  box-shadow: 0 2px 20px rgba(0,0,0,0.06);
+}
+
+.card-brand {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.card-brand .logo {
+  display: inline-block;
+  background: #1a56db;
+  color: #fff;
+  padding: 6px 16px;
+  border-radius: 30px;
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.card-brand h2 {
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: -0.5px;
+  line-height: 1.3;
+}
+
+.card-brand h2 em {
+  font-style: normal;
+  color: #1a56db;
+}
+
+.card-brand .date {
+  font-size: 13px;
+  color: #999;
+  margin-top: 4px;
+}
+
+.card-summary-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 22px;
+}
+
+.card-chip {
+  flex: 1;
+  background: #f7f7f4;
+  border-radius: 12px;
+  padding: 12px 10px;
+  text-align: center;
+}
+
+.card-chip .cl { font-size: 11px; color: #999; margin-bottom: 2px; }
+.card-chip .cv { font-size: 16px; font-weight: 800; letter-spacing: -0.5px; }
+.card-chip .cv.green { color: #059669; }
+.card-chip .cv.blue { color: #1a56db; }
+
+.card-member {
+  background: #fafaf8;
+  border: 1px solid #f0efea;
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 10px;
+}
+
+.card-member-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.card-member-name {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.card-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.card-member-name h4 {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.card-member-name .rel {
+  font-size: 12px;
+  color: #999;
+  font-weight: 400;
+}
+
+.card-save-badge {
+  background: #ecfdf5;
+  color: #047857;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+
+.card-price-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.card-price-box {
+  flex: 1;
+  padding: 10px;
+  border-radius: 10px;
+  text-align: center;
+}
+
+.card-price-box.before { background: #fef2f2; }
+.card-price-box.after { background: #ecfdf5; }
+.card-price-box .pl { font-size: 11px; color: #999; margin-bottom: 2px; }
+.card-price-box.before .pa { font-size: 18px; font-weight: 700; color: #dc2626; text-decoration: line-through; text-decoration-thickness: 2px; }
+.card-price-box.after .pa { font-size: 18px; font-weight: 900; color: #059669; }
+
+.card-plan {
+  background: #f3f4f6;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 12px;
+  color: #666;
+}
+
+.card-total {
+  background: linear-gradient(135deg, #1a56db, #1e40af);
+  border-radius: 16px;
+  padding: 22px 20px;
+  color: #fff;
+  margin-top: 14px;
+}
+
+.card-total-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 4px;
+}
+
+.card-total-row .tl { font-size: 13px; opacity: 0.75; }
+.card-total-row .tv { font-size: 15px; font-weight: 700; }
+
+.card-total-divider {
+  border: none;
+  border-top: 1px solid rgba(255,255,255,0.2);
+  margin: 12px 0;
+}
+
+.card-total-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.card-total-main .tl { font-size: 15px; font-weight: 500; }
+.card-total-main .tv { font-size: 26px; font-weight: 900; letter-spacing: -1px; }
+.card-total-main .tv small { font-size: 13px; font-weight: 400; opacity: 0.7; }
+
+.card-memo {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-top: 14px;
+}
+
+.card-memo h5 {
+  font-size: 12px;
+  font-weight: 700;
+  color: #92400e;
+  margin-bottom: 6px;
+}
+
+.card-memo p {
+  font-size: 13px;
+  color: #78350f;
+  line-height: 1.6;
+  white-space: pre-line;
+}
+
+.card-footer {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 12px;
+  color: #bbb;
+}
+
+@media (max-width: 480px) {
+  .app { padding: 16px 12px 48px; }
+  .form-row { flex-direction: column; gap: 8px; }
+  .card-brand h2 { font-size: 19px; }
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- 고객명 입력 -->
+  <div class="input-section">
+    <div class="form-row single">
+      <div class="form-group">
+        <label>고객명</label>
+        <input type="text" id="customerName" placeholder="고객명을 입력하세요">
+      </div>
+    </div>
+  </div>
+  <input type="hidden" id="cardDate">
+
+  <!-- 구성원 입력 -->
+  <div class="input-section">
+    <h2>👨‍👩‍👧‍👦 가족 구성원</h2>
+    <div id="memberList"></div>
+    <button class="btn-add" onclick="addMember()">+ 구성원 추가</button>
+  </div>
+
+  <!-- 메모 -->
+  <div class="input-section">
+    <h2>📌 메모</h2>
+    <div class="form-row single">
+      <div class="form-group">
+        <textarea id="memo" placeholder="약정 기간, 결합 할인, 참고사항 등"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- 버튼 -->
+  <div class="action-btns">
+    <button class="btn btn-preview" onclick="generateCard()">미리보기 생성</button>
+    <button class="btn btn-download" id="btnDownload" onclick="downloadImage()">📥 이미지 다운로드</button>
+  </div>
+
+  <!-- 미리보기 -->
+  <div id="preview-area">
+    <div class="preview-label">미리보기</div>
+    <div id="card"></div>
+  </div>
+</div>
+
+<script>
+const avatarColors = ['#3b82f6','#ec4899','#8b5cf6','#f59e0b','#10b981','#ef4444','#6366f1','#14b8a6'];
+let memberCount = 0;
+
+document.getElementById('cardDate').value = new Date().toISOString().split('T')[0];
+
+function addMember() {
+  memberCount++;
+  const div = document.createElement('div');
+  div.className = 'member-input';
+  div.id = 'member-' + memberCount;
+  const n = memberCount;
+  div.innerHTML = `
+    <div class="member-header">
+      <span class="member-num">구성원 ${n}</span>
+      <button class="btn-remove" onclick="removeMember(${n})">×</button>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>이름</label>
+        <input type="text" class="m-name" placeholder="홍길동">
+      </div>
+      <div class="form-group">
+        <label>관계</label>
+        <select class="m-relation">
+          <option>본인</option>
+          <option>배우자</option>
+          <option>자녀</option>
+          <option>부모</option>
+          <option>기타</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>현재 요금 (원)</label>
+        <input type="number" class="m-before" placeholder="69000">
+      </div>
+      <div class="form-group">
+        <label>변경 요금 (원)</label>
+        <input type="number" class="m-after" placeholder="45000">
+      </div>
+    </div>
+    <div class="form-row single">
+      <div class="form-group">
+        <label>요금제 변경 내역</label>
+        <input type="text" class="m-plan" placeholder="5G 프리미엄 → LTE 무제한 51">
+      </div>
+    </div>
+  `;
+  document.getElementById('memberList').appendChild(div);
+}
+
+function removeMember(n) {
+  const el = document.getElementById('member-' + n);
+  if (el) el.remove();
+}
+
+function generateCard() {
+  const name = document.getElementById('customerName').value || '고객';
+  const date = document.getElementById('cardDate').value;
+  const memo = document.getElementById('memo').value;
+  const members = document.querySelectorAll('.member-input');
+
+  if (members.length === 0) {
+    alert('구성원을 최소 1명 추가해주세요.');
+    return;
+  }
+
+  let memberCards = '';
+  let totalBefore = 0;
+  let totalAfter = 0;
+
+  members.forEach((m, i) => {
+    const mName = m.querySelector('.m-name').value || '이름없음';
+    const mRel = m.querySelector('.m-relation').value;
+    const mBefore = parseInt(m.querySelector('.m-before').value) || 0;
+    const mAfter = parseInt(m.querySelector('.m-after').value) || 0;
+    const mPlan = m.querySelector('.m-plan').value || '-';
+    const save = mBefore - mAfter;
+    const color = avatarColors[i % avatarColors.length];
+    const initial = mName.charAt(0);
+
+    totalBefore += mBefore;
+    totalAfter += mAfter;
+
+    memberCards += `
+      <div class="card-member">
+        <div class="card-member-top">
+          <div class="card-member-name">
+            <div class="card-avatar" style="background:${color}">${initial}</div>
+            <div>
+              <h4>${mName}</h4>
+              <span class="rel">${mRel}</span>
+            </div>
+          </div>
+          <span class="card-save-badge">-${save.toLocaleString()}원</span>
+        </div>
+        <div class="card-price-row">
+          <div class="card-price-box before">
+            <div class="pl">현재 요금</div>
+            <div class="pa">${mBefore.toLocaleString()}원</div>
+          </div>
+          <span style="color:#aaa;font-size:16px;">→</span>
+          <div class="card-price-box after">
+            <div class="pl">변경 요금</div>
+            <div class="pa">${mAfter.toLocaleString()}원</div>
+          </div>
+        </div>
+        <div class="card-plan">📱 ${mPlan}</div>
+      </div>
+    `;
+  });
+
+  const totalSave = totalBefore - totalAfter;
+  const yearlySave = totalSave * 12;
+  const dateStr = date ? new Date(date).toLocaleDateString('ko-KR', {year:'numeric',month:'long',day:'numeric'}) : '';
+
+  let memoHtml = '';
+  if (memo.trim()) {
+    memoHtml = `
+      <div class="card-memo">
+        <h5>📌 참고사항</h5>
+        <p>${memo}</p>
+      </div>
+    `;
+  }
+
+  document.getElementById('card').innerHTML = `
+    <div class="card-brand">
+      <span class="logo">슈텔레콤</span>
+      <h2>${name}고객님 가족<br><em>요금 절약 플랜</em></h2>
+      <div class="date">${dateStr} 기준</div>
+    </div>
+
+    <div class="card-summary-bar">
+      <div class="card-chip">
+        <div class="cl">가족 구성원</div>
+        <div class="cv">${members.length}명</div>
+      </div>
+      <div class="card-chip">
+        <div class="cl">월 절약</div>
+        <div class="cv green">-${totalSave.toLocaleString()}원</div>
+      </div>
+      <div class="card-chip">
+        <div class="cl">연간 절약</div>
+        <div class="cv blue">${yearlySave.toLocaleString()}원</div>
+      </div>
+    </div>
+
+    ${memberCards}
+
+    <div class="card-total">
+      <div class="card-total-row">
+        <span class="tl">변경 전 합계</span>
+        <span class="tv">${totalBefore.toLocaleString()}원</span>
+      </div>
+      <div class="card-total-row">
+        <span class="tl">변경 후 합계</span>
+        <span class="tv">${totalAfter.toLocaleString()}원</span>
+      </div>
+      <hr class="card-total-divider">
+      <div class="card-total-main">
+        <span class="tl">매월 절약</span>
+        <span class="tv">${totalSave.toLocaleString()}원 <small>/월</small></span>
+      </div>
+    </div>
+
+    ${memoHtml}
+
+    <div class="card-footer">슈텔레콤 | 요금 최적화 안내서</div>
+  `;
+
+  document.getElementById('preview-area').classList.add('show');
+  document.getElementById('btnDownload').classList.add('show');
+  document.getElementById('preview-area').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function downloadImage() {
+  const card = document.getElementById('card');
+  html2canvas(card, {
+    scale: 2,
+    backgroundColor: '#ffffff',
+    borderRadius: 20,
+    useCORS: true
+  }).then(canvas => {
+    const link = document.createElement('a');
+    const name = document.getElementById('customerName').value || '고객';
+    link.download = name + '_요금최적화.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  });
+}
+
+addMember();
+</script>
+
+</body>
+</html>

@@ -27,6 +27,9 @@ const MEANINGFUL = /[^\s.,!?。、！？·…]/;
 
 const DIRECTIONS = ["toPartner", "toKo"];
 
+const OUTPUT_GAIN = 3.0;
+const MIC_GAIN = 1.5;
+
 export default function Page() {
   const [partner, setPartner] = useState("ja");
   const [status, setStatus] = useState("idle");
@@ -43,6 +46,10 @@ export default function Page() {
   const inputBufRef = useRef({});
   const activeDirRef = useRef("toPartner");
   const convoRef = useRef(null);
+  const audioCtxRef = useRef(null);
+  const gainNodesRef = useRef({});
+  const nodesRef = useRef({});
+  const sendStreamRef = useRef(null);
 
   const live = status === "live";
   const connecting = status === "connecting";
@@ -67,6 +74,18 @@ export default function Page() {
         } catch {}
       }
     }
+    if (audioCtxRef.current) {
+      try {
+        audioCtxRef.current.close();
+      } catch {}
+      audioCtxRef.current = null;
+    }
+    gainNodesRef.current = {};
+    nodesRef.current = {};
+    sendStreamRef.current = null;
+    for (const el of [audioPartnerRef.current, audioKoRef.current]) {
+      if (el) el.srcObject = null;
+    }
     if (micRef.current) {
       micRef.current.getTracks().forEach((t) => t.stop());
       micRef.current = null;
@@ -77,11 +96,12 @@ export default function Page() {
   useEffect(() => () => stop(), [stop]);
 
   useEffect(() => {
-    if (audioPartnerRef.current) {
-      audioPartnerRef.current.muted = activeDir !== "toPartner";
+    const g = gainNodesRef.current;
+    if (g.toPartner) {
+      g.toPartner.gain.value = activeDir === "toPartner" ? OUTPUT_GAIN : 0;
     }
-    if (audioKoRef.current) {
-      audioKoRef.current.muted = activeDir !== "toKo";
+    if (g.toKo) {
+      g.toKo.gain.value = activeDir === "toKo" ? OUTPUT_GAIN : 0;
     }
   }, [activeDir]);
 
@@ -165,15 +185,27 @@ export default function Page() {
     pcsRef.current[direction] = pc;
 
     pc.ontrack = ({ streams }) => {
+      const stream = streams[0];
       const el =
         direction === "toPartner"
           ? audioPartnerRef.current
           : audioKoRef.current;
       if (el) {
-        el.srcObject = streams[0];
-        el.muted = activeDirRef.current !== direction;
+        el.srcObject = stream;
+        el.muted = true;
         el.play().catch(() => {});
       }
+      const ctx = audioCtxRef.current;
+      if (!ctx) return;
+      const source = ctx.createMediaStreamSource(stream);
+      const gain = ctx.createGain();
+      gain.gain.value = activeDirRef.current === direction ? OUTPUT_GAIN : 0;
+      const compressor = ctx.createDynamicsCompressor();
+      source.connect(gain);
+      gain.connect(compressor);
+      compressor.connect(ctx.destination);
+      gainNodesRef.current[direction] = gain;
+      nodesRef.current[direction] = { source, gain, compressor };
     };
 
     pc.onconnectionstatechange = () => {
@@ -195,8 +227,9 @@ export default function Page() {
     dcsRef.current[direction] = dc;
     dc.onmessage = ({ data }) => handleEvent(direction, data);
 
-    for (const track of micRef.current.getAudioTracks()) {
-      pc.addTrack(track, micRef.current);
+    const sendStream = sendStreamRef.current || micRef.current;
+    for (const track of sendStream.getAudioTracks()) {
+      pc.addTrack(track, sendStream);
     }
 
     const offer = await pc.createOffer();
@@ -231,8 +264,28 @@ export default function Page() {
     inputBufRef.current = {};
 
     try {
-      const mic = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mic = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
+      });
       micRef.current = mic;
+
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      const ctx = new AudioCtx();
+      audioCtxRef.current = ctx;
+      if (ctx.state === "suspended") await ctx.resume();
+
+      const micSource = ctx.createMediaStreamSource(mic);
+      const micGain = ctx.createGain();
+      micGain.gain.value = MIC_GAIN;
+      const micDest = ctx.createMediaStreamDestination();
+      micSource.connect(micGain);
+      micGain.connect(micDest);
+      nodesRef.current.mic = { micSource, micGain, micDest };
+      sendStreamRef.current = micDest.stream;
 
       await Promise.all([
         connectSession("toPartner", partner),
@@ -316,8 +369,8 @@ export default function Page() {
         {live ? "정지" : connecting ? "연결 중… (탭하여 취소)" : "시작"}
       </button>
 
-      <audio ref={audioPartnerRef} autoPlay />
-      <audio ref={audioKoRef} autoPlay />
+      <audio ref={audioPartnerRef} autoPlay muted playsInline />
+      <audio ref={audioKoRef} autoPlay muted playsInline />
     </main>
   );
 }

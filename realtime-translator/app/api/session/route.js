@@ -1,6 +1,6 @@
 export const runtime = "nodejs";
 
-const ALLOWED_LANGUAGES = new Set(["ko", "ja", "en"]);
+const ALLOWED_LANGUAGES = new Set(["ko", "zh", "ja", "fr", "de", "pt", "en"]);
 
 export async function POST(request) {
   const apiKey = process.env.OPENAI_API_KEY;

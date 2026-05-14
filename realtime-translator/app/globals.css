@@ -32,7 +32,7 @@ body {
   padding: 20px 16px calc(20px + env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
 }
 
 .head {
@@ -61,20 +61,19 @@ body {
   display: inline-block;
 }
 
-.controls {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+.picker-label {
+  font-size: 13px;
+  color: var(--sub);
 }
 
-.pair-row {
-  display: flex;
+.lang-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
   gap: 8px;
 }
 
 .chip {
-  flex: 1;
-  padding: 12px 8px;
+  padding: 13px 6px;
   border-radius: 12px;
   border: 1px solid var(--border);
   background: var(--panel);
@@ -95,61 +94,40 @@ body {
   cursor: default;
 }
 
-.direction {
+.dir-bar {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  padding: 16px 16px 22px;
-  border-radius: 14px;
-  border: 1px solid var(--border);
+  gap: 8px;
+  font-size: 13px;
+  color: var(--sub);
+  padding: 10px;
+  border-radius: 10px;
   background: var(--panel);
-  color: var(--text);
-  cursor: pointer;
-  position: relative;
+  border: 1px solid var(--border);
 }
 
-.direction:disabled {
-  opacity: 0.6;
-  cursor: default;
+.dir-bar .sep {
+  opacity: 0.5;
 }
 
-.direction .lang {
-  font-size: 16px;
+.dir-bar strong {
+  color: var(--green);
   font-weight: 700;
 }
 
-.direction .lang-out {
-  color: var(--green);
-}
-
-.direction .arrow {
-  color: var(--sub);
-  font-size: 16px;
-}
-
-.direction .hint {
-  position: absolute;
-  bottom: 5px;
-  left: 0;
-  right: 0;
-  text-align: center;
-  font-size: 10px;
-  color: var(--sub);
-}
-
-.subtitle-box {
+.convo {
   flex: 1;
   min-height: 200px;
-  max-height: 50vh;
+  max-height: 55vh;
   overflow-y: auto;
-  padding: 18px;
+  padding: 16px;
   border-radius: 16px;
   border: 1px solid var(--border);
   background: var(--panel);
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 14px;
 }
 
 .placeholder {
@@ -161,12 +139,36 @@ body {
 }
 
 .line {
-  font-size: 20px;
-  line-height: 1.5;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tag {
+  font-size: 11px;
+  font-weight: 600;
+  align-self: flex-start;
+  padding: 2px 9px;
+  border-radius: 20px;
+}
+
+.tag-toPartner {
+  background: rgba(108, 99, 255, 0.2);
+  color: #a9a3ff;
+}
+
+.tag-toKo {
+  background: rgba(0, 212, 170, 0.15);
+  color: var(--green);
+}
+
+.line-text {
+  font-size: 19px;
+  line-height: 1.45;
   font-weight: 500;
 }
 
-.line-partial {
+.line-partial .line-text {
   color: var(--sub);
 }
 

@@ -43,7 +43,6 @@ export default function Page() {
   const micRef = useRef(null);
   const audioPartnerRef = useRef(null);
   const audioKoRef = useRef(null);
-  const inputBufRef = useRef({});
   const activeDirRef = useRef("toPartner");
   const convoRef = useRef(null);
   const audioCtxRef = useRef(null);
@@ -139,14 +138,7 @@ export default function Page() {
     const t = event.type;
 
     if (t === "session.input_transcript.delta") {
-      inputBufRef.current[direction] =
-        (inputBufRef.current[direction] || "") + (event.delta || "");
-      routeByInput(inputBufRef.current[direction]);
-    } else if (
-      t === "session.input_transcript.done" ||
-      t === "session.input_transcript.completed"
-    ) {
-      inputBufRef.current[direction] = "";
+      routeByInput(event.delta || "");
     } else if (t === "session.output_transcript.delta") {
       if (direction !== activeDirRef.current) return;
       setPartial((p) => p + (event.delta || ""));
@@ -261,7 +253,6 @@ export default function Page() {
     setStatus("connecting");
     activeDirRef.current = "toPartner";
     setActiveDir("toPartner");
-    inputBufRef.current = {};
 
     try {
       const mic = await navigator.mediaDevices.getUserMedia({
